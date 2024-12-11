@@ -43,8 +43,8 @@ public class ProductController {
 	// Endpoint to get the product creation page
 	@GetMapping("/index")
 	public ResponseEntity<?> getCreateProductPage() {
-		List<Category> categories = categoryDao.findAll();
-		return ResponseEntity.ok(categories);
+		List<Product> products = productDao.findAll();
+		return ResponseEntity.ok(products);
 	}
 
 	// Endpoint to edit a product
