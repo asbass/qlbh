@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 
 public interface ProductDAO extends JpaRepository<Product, Integer>{
@@ -17,7 +19,7 @@ public interface ProductDAO extends JpaRepository<Product, Integer>{
 //@Query("SELECT o FROM Product o WHERE o.name LIKE ?1")
 //Page<Product> findByKeywords(String keywords, Pageable pageable);
 
-Page<Product> findAllByNameLike(String keywords, Pageable pageable);
+	List<Product> findAllByNameLike(String keywords);
 /*
 	@Query("SELECT new Report(o.category, sum(o.price), count(o)) "
 			+ " FROM Product o "
