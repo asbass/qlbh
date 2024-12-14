@@ -36,9 +36,8 @@ public class Product implements Serializable {
 	// Thêm trường description và quality
 	@Column(length = 500) // description có thể dài hơn, bạn có thể điều chỉnh length nếu cần
 			String description;
-
-	@Column(length = 50) // quality có độ dài tối đa là 50 ký tự
-	String quality;
+	// quality có độ dài tối đa là 50 ký tự
+	Integer quality;
 
 	@ManyToOne
 	@JoinColumn(name = "categoryid")
