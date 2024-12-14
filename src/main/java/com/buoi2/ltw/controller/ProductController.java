@@ -38,6 +38,7 @@ public class ProductController {
 	public ResponseEntity<?> getCreateProductPage() {
 		List<Product> Products = productDao.findAll();
 		return ResponseEntity.ok(Products);
+
 	}
 
 	// Endpoint to edit a product
