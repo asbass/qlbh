@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
-
 import com.buoi2.ltw.dao.CategoryDAO;
 import com.buoi2.ltw.dao.ProductDAO;
 import com.buoi2.ltw.entity.Category;
@@ -12,17 +11,11 @@ import com.buoi2.ltw.entity.Product;
 import com.buoi2.ltw.service.SessionService;
 import jakarta.servlet.ServletContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-
 
 @Controller
 @RequestMapping("admin/product")
@@ -43,8 +36,9 @@ public class ProductController {
 	// Endpoint to get the product creation page
 	@GetMapping("/index")
 	public ResponseEntity<?> getCreateProductPage() {
-		List<Product> products = productDao.findAll();
-		return ResponseEntity.ok(products);
+		List<Product> Products = productDao.findAll();
+		return ResponseEntity.ok(Products);
+
 	}
 
 	// Endpoint to edit a product
@@ -117,19 +111,13 @@ public class ProductController {
 		}
 	}
 
-	// Endpoint to search for products
+	// Endpoint to search for products (no pagination)
 	@GetMapping("/search")
-	public ResponseEntity<?> searchProducts(
-			@RequestParam("keywords") Optional<String> keywords,
-			@RequestParam("p") Optional<Integer> page) {
-
+	public ResponseEntity<?> searchProducts(@RequestParam("keywords") Optional<String> keywords) {
 		String keyword = keywords.orElse(session.get("keywords", ""));
 		session.set("keywords", keyword);
-
-		Pageable pageable = PageRequest.of(page.orElse(0), 5);
-		Page<Product> productPage = productDao.findAllByNameLike("%" + keyword + "%", pageable);
-
-		return ResponseEntity.ok(productPage);
+		List<Product> products = productDao.findAllByNameLike("%" + keyword + "%");
+		return ResponseEntity.ok(products);
 	}
 
 	// Endpoint to reset (redirect to index)
@@ -137,5 +125,4 @@ public class ProductController {
 	public ResponseEntity<?> reset() {
 		return ResponseEntity.ok("Reset successful");
 	}
-	
 }
