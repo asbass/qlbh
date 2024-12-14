@@ -4,36 +4,47 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
 
 @SuppressWarnings("serial")
-//@NamedQuery(
-//		name = "findByKeyword",
-//		query = "SELECT p FROM Product p WHERE p.name LIKE ?1"
-//)
 @Data
 @Entity
 @Table(name = "Products")
-public class Product  implements Serializable{
+public class Product implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Integer id;
+
+	@Column(nullable = false) // name không được null
 	String name;
+
 	String image;
+
+	@Column(nullable = false) // price không được null
 	Double price;
+
 	@Temporal(TemporalType.DATE)
-	@Column(name = "Createdate")
+	@Column(name = "Createdate", nullable = false) // Createdate không được null
 	Date createDate = new Date();
-	Boolean available;
+
+	@Column(nullable = false, columnDefinition = "tinyint(1) default 1") // giá trị mặc định là true
+	Boolean available = true;
+
+	// Thêm trường description và quality
+	@Column(length = 500) // description có thể dài hơn, bạn có thể điều chỉnh length nếu cần
+			String description;
+
+	@Column(length = 50) // quality có độ dài tối đa là 50 ký tự
+	String quality;
+
 	@ManyToOne
 	@JoinColumn(name = "categoryid")
 	Category category;
+
 	@JsonIgnore
 	@OneToMany(mappedBy = "product")
-	List<OrderDetail> orderDetails;	
+	List<OrderDetail> orderDetails;
 }
