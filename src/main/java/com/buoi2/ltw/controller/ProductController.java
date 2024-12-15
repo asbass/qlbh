@@ -1,11 +1,13 @@
 package com.buoi2.ltw.controller;
 
 import java.io.File;
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,7 @@ public class ProductController {
 	public ResponseEntity<?> getCreateProductPage() {
 		List<Product> Products = productDao.findAll();
 		return ResponseEntity.ok(Products);
+
 	}
 
 	// Endpoint to edit a product
@@ -149,15 +152,30 @@ public class ProductController {
 
 
 	// Endpoint to delete a product
+//	@DeleteMapping("/delete/{id}")
+//	public ResponseEntity<?> deleteProduct(@PathVariable("id") int id) {
+//		try {
+//			productDao.deleteById(id);
+//			return ResponseEntity.ok("Product deleted successfully");
+//		} catch (Exception e) {
+//			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while deleting product");
+//		}
+//	}
 	@DeleteMapping("/delete/{id}")
 	public ResponseEntity<?> deleteProduct(@PathVariable("id") int id) {
 		try {
 			productDao.deleteById(id);
-			return ResponseEntity.ok("Product deleted successfully");
+			// Trả về JSON thay vì chuỗi đơn giản
+			Map<String, String> response = new HashMap<>();
+			response.put("message", "Product deleted successfully");
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while deleting product");
+			Map<String, String> errorResponse = new HashMap<>();
+			errorResponse.put("error", "Error while deleting product");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
 		}
 	}
+
 
 	// Endpoint to search for products (no pagination)
 	@GetMapping("/search")
