@@ -20,4 +20,6 @@ public interface AccountDAO extends JpaRepository<Account, String>{
 	
 	@Query("select a from Account a where a.username like ?1 and a.password like ?2")
 	public Optional<Account> checkLogin(String userName, String password);
+
+	public Optional<Account> findByUsername(String username);
 }
