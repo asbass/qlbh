@@ -24,8 +24,12 @@ public class OrderController {
     }
 
     @PostMapping("/create")
-    public String createOrder(@Valid @RequestBody CreateOrderDTO createOrderDTO) {
-        return orderService.addOrder(createOrderDTO);
+    public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderDTO createOrderDTO) {
+        try {
+            return orderService.addOrder(createOrderDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping("/detail/{orderId}")
@@ -34,7 +38,11 @@ public class OrderController {
     }
 
     @PutMapping("/update-status/{orderId}")
-    public String updateStatusOrder(@PathVariable long orderId, @Valid @RequestBody UpdateStatusOrderDTO updateStatusOrderDTO) {
-        return orderService.updateStatusOrder(orderId, updateStatusOrderDTO);
+    public ResponseEntity<Order> updateStatusOrder(@PathVariable long orderId, @Valid @RequestBody UpdateStatusOrderDTO updateStatusOrderDTO) {
+        try {
+            return orderService.updateStatusOrder(orderId, updateStatusOrderDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
