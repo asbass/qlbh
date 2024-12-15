@@ -15,6 +15,6 @@ import org.springframework.stereotype.Repository;
 public interface CategoryDAO extends JpaRepository<Category, String> {
 	@Query(value = "SELECT * FROM Categories WHERE name LIKE ?1",nativeQuery = true)
 	List<Category> findByKeyword(String keyword);
-	Page<Category> findAllByNameLike(String keywords, Pageable pageable);
+	List<Category> findAllByNameLike(String keywords);
 
 }

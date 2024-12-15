@@ -1,58 +1,50 @@
 package com.buoi2.ltw.controller;
 
-import java.util.Optional;
-
-import com.buoi2.ltw.dao.CategoryDAO;
-import com.buoi2.ltw.entity.Category;
-import com.buoi2.ltw.service.SessionService;
+import com.buoi2.ltw.dto.CategoryDTO;
+import com.buoi2.ltw.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("admin/categories")
 public class CategoryController {
 
 	@Autowired
-	CategoryDAO dao;
+	private CategoryService categoryService;
 
-	@Autowired
-	SessionService session;
-
+	// Lấy tất cả danh mục (không phân trang)
 	@GetMapping("/index")
-	public ResponseEntity<Page<Category>> index(@RequestParam("c") Optional<Integer> c) {
-		Pageable pageable = PageRequest.of(c.orElse(0), 5);
-		Page<Category> page = dao.findAll(pageable);
-		return ResponseEntity.ok(page);
+	public ResponseEntity<List<CategoryDTO>> index() {
+		List<CategoryDTO> categories = categoryService.findAll();
+		return ResponseEntity.ok(categories);
 	}
 
 	@GetMapping("/edit/{id}")
-	public ResponseEntity<Category> edit(@PathVariable("id") String id) {
-		Optional<Category> item = dao.findById(id);
-		if (item.isPresent()) {
-			return ResponseEntity.ok(item.get());
+	public ResponseEntity<CategoryDTO> edit(@PathVariable("id") String id) {
+		CategoryDTO category = categoryService.getCategoryById(id);
+		if (category != null) {
+			return ResponseEntity.ok(category);
 		} else {
 			return ResponseEntity.notFound().build();
 		}
 	}
 
 	@PostMapping("/add")
-	public ResponseEntity<Category> create(@RequestBody Category item) {
-		Category savedItem = dao.save(item);
-		return ResponseEntity.ok(savedItem);
+	public ResponseEntity<CategoryDTO> create(@RequestBody CategoryDTO categoryDTO) {
+		CategoryDTO createdCategory = categoryService.createCategory(categoryDTO);
+		return ResponseEntity.ok(createdCategory);
 	}
 
 	@PutMapping("/update")
-	public ResponseEntity<Category> update(@RequestBody Category item) {
-		if (dao.existsById(item.getId())) {
-			Category updatedItem = dao.save(item);
-			return ResponseEntity.ok(updatedItem);
+	public ResponseEntity<CategoryDTO> update(@RequestBody CategoryDTO categoryDTO) {
+		CategoryDTO updatedCategory = categoryService.updateCategory(categoryDTO);
+		if (updatedCategory != null) {
+			return ResponseEntity.ok(updatedCategory);
 		} else {
 			return ResponseEntity.notFound().build();
 		}
@@ -60,22 +52,20 @@ public class CategoryController {
 
 	@DeleteMapping("/delete/{id}")
 	public ResponseEntity<Void> delete(@PathVariable("id") String id) {
-		if (dao.existsById(id)) {
-			dao.deleteById(id);
+		boolean isDeleted = categoryService.deleteCategory(id);
+		if (isDeleted) {
 			return ResponseEntity.ok().build();
 		} else {
 			return ResponseEntity.notFound().build();
 		}
 	}
-	//chưa sửa xong
+
+	// Tìm kiếm không phân trang
 	@GetMapping("/search")
-	public ResponseEntity<Page<Category>> search(@RequestParam("keywords") Optional<String> kw,
-												 @RequestParam("c") Optional<Integer> c) {
-		String keywords = kw.orElse(session.get("keywords", ""));
-		session.set("keywords", keywords);
-		Pageable pageable = PageRequest.of(c.orElse(0), 5);
-		Page<Category> page = dao.findAllByNameLike("%" + keywords + "%", pageable);
-		return ResponseEntity.ok(page);
+	public ResponseEntity<List<CategoryDTO>> search(@RequestParam("keywords") Optional<String> kw) {
+		String keywords = kw.orElse("");  // Nếu không có từ khóa, tìm tất cả
+		List<CategoryDTO> categories = categoryService.searchCategories(keywords);
+		return ResponseEntity.ok(categories);
 	}
 
 	@GetMapping("/reset")
