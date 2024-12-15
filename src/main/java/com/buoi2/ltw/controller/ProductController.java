@@ -1,6 +1,13 @@
 package com.buoi2.ltw.controller;
 
 import java.io.File;
+
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +19,8 @@ import com.buoi2.ltw.entity.Category;
 import com.buoi2.ltw.entity.Product;
 import com.buoi2.ltw.service.SessionService;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,53 +63,93 @@ public class ProductController {
 		}
 	}
 
-	// Endpoint to add a new product
+
+
 	@PostMapping("/add")
 	public ResponseEntity<?> addProduct(
 			@ModelAttribute Product product,
-			@RequestParam("images") MultipartFile image) {
+			@RequestParam("images") Part image) {
+		try {
+			if (image == null || image.getSize() == 0) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No image uploaded.");
+			}
 
-		if (image.isEmpty()) {
-			return ResponseEntity.badRequest().body("Please upload an image file");
+			// Xử lý tệp và lưu vào thư mục
+			String filename = image.getSubmittedFileName();
+			Path path = Path.of("C:/uploadedimages/" + filename);
+			Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+			// Lưu vào database
+			product.setImage(filename);
+			productDao.save(product);  // Lưu vào database
+
+			// Trả về thông báo thành công
+			return ResponseEntity.ok(new HashMap() {{
+				put("message", "Product added successfully");
+			}});
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new HashMap<String, String>() {{
+						put("message", "Error while saving product");
+					}});
+		}
+	}
+	@PutMapping("/update")
+	public ResponseEntity<?> updateProduct(
+			@RequestParam(value = "id") Integer id,  // Nhận ID sản phẩm từ request
+			@ModelAttribute Product product,
+			@RequestParam(value = "images", required = false) MultipartFile image) {
+
+		// Kiểm tra nếu quality nhỏ hơn 1
+		if (product.getQuality() == null || product.getQuality() < 1) {
+			return ResponseEntity.badRequest().body(Map.of("message", "Quality must be at least 1"));
+		}
+
+		// Kiểm tra xem sản phẩm có tồn tại không
+		Optional<Product> existingProductOptional = productDao.findById(id);
+		if (!existingProductOptional.isPresent()) {
+			return ResponseEntity.badRequest().body(Map.of("message", "Product with ID " + id + " not found"));
+		}
+
+		Product existingProduct = existingProductOptional.get();
+
+		// Nếu có hình ảnh mới, xử lý hình ảnh
+		if (image != null && !image.isEmpty()) {
+			try {
+				String filename = image.getOriginalFilename();
+				Path path = Paths.get("C:/uploadedimages/" + filename);
+				image.transferTo(path);
+				existingProduct.setImage(filename);  // Cập nhật ảnh cho sản phẩm
+			} catch (Exception e) {
+				e.printStackTrace();
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Error while uploading image"));
+			}
+		}
+
+		// Cập nhật các trường còn lại
+		existingProduct.setName(product.getName());
+		existingProduct.setDescription(product.getDescription());
+		existingProduct.setPrice(product.getPrice());
+		existingProduct.setQuality(product.getQuality());
+
+		// Tìm và cập nhật Category
+		if (product.getCategory() != null && product.getCategory().getId() != null) {
+			Optional<Category> categoryOptional = categoryDao.findById(product.getCategory().getId());
+			categoryOptional.ifPresent(existingProduct::setCategory);  // Cập nhật Category nếu tồn tại
 		}
 
 		try {
-			String filename = image.getOriginalFilename();
-			File file = new File(app.getRealPath("/images/" + filename));
-			image.transferTo(file);
-
-			product.setImage(filename);
-			productDao.save(product);
-
-			return ResponseEntity.ok("Product added successfully");
+			productDao.save(existingProduct);  // Cập nhật sản phẩm
+			return ResponseEntity.ok(Map.of("message", "Product updated successfully"));
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while saving product");
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Error while updating product"));
 		}
 	}
 
 	// Endpoint to update a product
-	@PutMapping("/update")
-	public ResponseEntity<?> updateProduct(
-			@ModelAttribute Product product,
-			@RequestParam("images") MultipartFile image) {
 
-		if (image.isEmpty()) {
-			return ResponseEntity.badRequest().body("Please upload an image file");
-		}
-
-		try {
-			String filename = image.getOriginalFilename();
-			File file = new File(app.getRealPath("/images/" + filename));
-			image.transferTo(file);
-
-			product.setImage(filename);
-			productDao.save(product);
-
-			return ResponseEntity.ok("Product updated successfully");
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while updating product");
-		}
-	}
 
 	// Endpoint to delete a product
 //	@DeleteMapping("/delete/{id}")
