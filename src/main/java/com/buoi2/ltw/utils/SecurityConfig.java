@@ -37,7 +37,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Tắt CSRF
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/register").permitAll() // Không cần token cho /auth/login và /auth/register
+                        .requestMatchers("/auth/login", "/auth/register",
+                                "/admin/categories/index", "/admin/product/index").permitAll() // Không cần token cho /auth/login và /auth/register
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess
