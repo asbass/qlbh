@@ -71,13 +71,23 @@ public class AccountService implements UserDetailsService {
         try {
             if (accountDAO.existsById(username)) {
                 accountDAO.deleteById(username);
-                return ResponseEntity.ok("Xóa tài khoản thành công!");
+                return ResponseEntity.ok("Deleted Successfully!");
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Tài khoản không tồn tại!");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found!");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra khi xóa tài khoản!");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while deleting account!");
         }
+    }
+
+    public ResponseEntity<Account> findAccountByUsername(String username) {
+        Optional<Account> account = accountDAO.findByUsername(username);
+        if (account.isPresent()) {
+            return ResponseEntity.ok(account.get());
+        }else {
+            return ResponseEntity.notFound().build();
+        }
+
     }
 }
