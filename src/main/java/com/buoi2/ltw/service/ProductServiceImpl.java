@@ -110,9 +110,22 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductDTO> getAllProducts() {
         List<Product> products = productDao.findAll();
-        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return products.stream().map(this::mapToProductDTO).collect(Collectors.toList());
     }
-
+    private ProductDTO mapToProductDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setPrice(product.getPrice());
+        dto.setImage(product.getImage());
+        dto.setAvailable(product.getAvailable());
+        dto.setDescription(product.getDescription());
+        dto.setQuality(product.getQuality());
+        dto.setCreateDate(product.getCreateDate());
+        dto.setCategoryId(product.getCategory().getId().toString());
+        dto.setCategoryName(product.getCategory().getName()); // Lấy tên danh mục
+        return dto;
+    }
     @Override
     public List<ProductDTO> searchProductsByName(String keyword) {
         List<Product> products = productDao.findAllByNameLike("%" + keyword + "%");

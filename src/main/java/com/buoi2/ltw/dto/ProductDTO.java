@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -33,6 +35,11 @@ public class ProductDTO {
 
     @NotNull(message = "Category is mandatory")
     private String categoryId;  // Assuming we just need the category ID in the DTO
+
+    private String categoryName; // Tên của category
+
+    @NotNull(message = "Creation date is mandatory")
+    private Date createDate; // Ngày tạo sản phẩm
 
     public String getName() {
         return name;
