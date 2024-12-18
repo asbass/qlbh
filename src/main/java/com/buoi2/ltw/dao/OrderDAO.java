@@ -20,10 +20,11 @@ public interface OrderDAO extends JpaRepository<Order, Long> {
     // Thống kê số lượng đơn hàng theo tháng
     @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
     List<Object[]> getOrderStatusCount();
-    @Query("SELECT o.account, SUM(od.price * od.quantity) AS totalSpent " +
-            "FROM Order o JOIN o.orderDetails od " +
+    @Query(value = "SELECT o.username, SUM(od.price * od.quantity) AS totalSpent " +
+            "FROM Orders o " +
+            "JOIN OrderDetails od ON o.id = od.orderid " +
             "WHERE YEAR(o.createDate) = :year AND MONTH(o.createDate) = :month " +
-            "GROUP BY o.account " +
-            "ORDER BY totalSpent DESC")
+            "GROUP BY o.username " +
+            "ORDER BY totalSpent DESC LIMIT 10", nativeQuery = true)
     List<Object[]> getTopBuyersByMonth(@Param("year") int year, @Param("month") int month);
 }
