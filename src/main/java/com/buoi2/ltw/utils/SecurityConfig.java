@@ -42,7 +42,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register",
-                                "/admin/categories/index", "/admin/product/index").permitAll() // Không cần token cho /auth/login và /auth/register
+                                "/admin/categories/index", "/admin/product/index",
+                                "/admin/product/edit/**").permitAll() // Không cần token cho /auth/login và /auth/register
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess
