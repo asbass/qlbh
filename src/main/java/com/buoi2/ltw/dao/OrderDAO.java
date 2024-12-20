@@ -27,4 +27,6 @@ public interface OrderDAO extends JpaRepository<Order, Long> {
             "GROUP BY o.username " +
             "ORDER BY totalSpent DESC LIMIT 10", nativeQuery = true)
     List<Object[]> getTopBuyersByMonth(@Param("year") int year, @Param("month") int month);
+    @Query("SELECT o FROM Order o WHERE o.account.username = :username")
+    List<Order> getOrdersByUsername(@Param("username") String username);
 }

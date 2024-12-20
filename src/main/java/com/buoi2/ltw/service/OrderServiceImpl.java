@@ -45,6 +45,15 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
+    public ResponseEntity<List<Order>> listAllOrderByUser(String userName) {
+        List<Order> listOrder = orderDAO.getOrdersByUsername(userName);
+        if (listOrder.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<List<Order>>(listOrder, HttpStatus.OK);
+    }
+
+    @Override
     public ResponseEntity<Order> getOrderDetails(Long orderId) {
         Optional<Order> order = orderDAO.findById(orderId);
         if (order.isEmpty()) {

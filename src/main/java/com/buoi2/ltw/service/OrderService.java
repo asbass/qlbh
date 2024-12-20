@@ -15,4 +15,6 @@ public interface OrderService {
 
     ResponseEntity<Order> updateStatusOrder(Long orderId, UpdateStatusOrderDTO updateStatusOrderDTO) throws Exception;
 
+    ResponseEntity<List<Order>> listAllOrderByUser(String userName);
+
 }
