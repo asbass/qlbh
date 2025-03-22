@@ -38,26 +38,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Tắt CSRF
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Phải đặt trên cùng
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register",
                                 "/admin/categories/index", "/admin/product/index",
-                                "/admin/product/edit/**").permitAll() // Không cần token cho /auth/login và /auth/register
+                                "/admin/product/edit/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(sess -> sess
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Không sử dụng session
-                )
-                .authenticationProvider(authenticationProvider()) // Để sử dụng authentication provider nếu cần
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://127.0.0.1:5500"); // Nguồn được phép
+        configuration.addAllowedOriginPattern("*"); // Nguồn được phép
         configuration.addAllowedMethod("*"); // Cho phép tất cả các phương thức (GET, POST, PUT, DELETE, ...)
         configuration.addAllowedHeader("*"); // Cho phép tất cả các headers
         configuration.setAllowCredentials(true); // Cho phép gửi credentials (cookies, authorization headers)

@@ -7,6 +7,7 @@ import com.buoi2.ltw.service.AccountService;
 import com.buoi2.ltw.service.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,18 +35,26 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
 //    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
-    @PostMapping("/register")
-    public String register(@Valid @RequestBody RegisterDTO registerDTO) {
-        return accountService.addAccount(registerDTO);
+@PostMapping("/register")
+public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO registerDTO) {
+    try {
+        Account savedAccount = accountService.addAccount(registerDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedAccount);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
     }
+}
+
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDTO loginDTO) {
+        System.out.println("testststst");
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword())
         );
 
         if (authentication.isAuthenticated()) {
+            System.out.println("testststst");
             String token = jwtService.generateToken(loginDTO.getUsername());
             ResponseEntity<Account> acc = accountService.findAccountByUsername(loginDTO.getUsername());
             Account account = acc.getBody();

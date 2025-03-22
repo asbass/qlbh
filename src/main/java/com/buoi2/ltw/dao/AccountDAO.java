@@ -13,7 +13,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 
 public interface AccountDAO extends JpaRepository<Account, String>{
-	
+	boolean existsByUsername(String username);
+	boolean existsByEmail(String email);
 	Page<Account> findAllByFullnameLike(String keywords, Pageable pageable);
 	@Query("select a from Account a where a.email like ?1")
 	public Optional<Account> findByEmail(String email);
