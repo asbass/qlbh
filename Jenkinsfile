@@ -22,14 +22,16 @@ pipeline {
         stage('Build & Push') {
             steps {
                 script {
-                     // Định nghĩa đường dẫn Java 21 và đường dẫn tới bin của nó
-                    def java21 = '/usr/lib/jvm/java-21-openjdk-amd64'
+
                     // Dùng lệnh find để xem pom.xml thực sự nằm ở đâu
-                    sh 'find . -name "pom.xml"'
-                   withEnv(["JAVA_HOME=${java21Home}", "PATH=${java21Home}/bin:${env.PATH}"]) {
-                        sh 'java -version' // Kiểm tra lại lần cuối
-                        sh 'mvn clean package -DskipTests'
-                    }
+                        sh 'find . -name "pom.xml"'
+                       withEnv([
+                            'JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64', 
+                            'PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:' + env.PATH
+                        ]) {
+                            sh 'java -version'
+                            sh 'mvn clean package -DskipTests'
+                        }
                     // Nếu find cho ra kết quả như: ./backend/pom.xml
                     // Bạn phải cd vào thư mục đó trước khi chạy maven
                     // Giả sử pom.xml nằm trong thư mục 'backend'                        
