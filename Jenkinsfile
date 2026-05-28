@@ -12,6 +12,12 @@ pipeline {
     }
 
     stages {
+        stage('Checkout Code') { // Thêm stage này
+            steps {
+                // Thay URL bằng repo của bạn
+                git branch: 'main', url: 'https://github.com/asbass/qlbh.git'
+            }
+        }
         stage('Build & Push') {
             steps {
                 script {
