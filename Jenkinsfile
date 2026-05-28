@@ -1,49 +1,57 @@
 pipeline {
-    agent any
-    tools {
-        maven 'Maven-3.9' // Tên bạn vừa đặt ở trên
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    imagePullPolicy: Always
+    command:
+    - /busybox/cat
+    tty: true
+    volumeMounts:
+    - name: docker-config
+      mountPath: /kaniko/.docker/
+  volumes:
+  - name: docker-config
+    secret:
+      secretName: docker-config
+      items:
+      - key: .dockerconfigjson
+        path: config.json
+'''
+        }
     }
+
     environment {
-        DOCKERHUB_USER = 'taibaton'
-        IMAGE_NAME = "${DOCKERHUB_USER}/ltw"
-        // Sử dụng Jenkins Credentials để bảo mật
-        DOCKER_CREDS = 'dockerhub-credentials-id' 
+        IMAGE_NAME = "taibaton/ltw"
         GIT_CREDS = 'github-pat-credentials-id'
     }
 
     stages {
-        stage('Build & Push') {
+        stage('Maven Build') {
             steps {
-                script {
-                    sh 'pwd'
-                    // Dùng lệnh ls -F để xem có thấy pom.xml không
-                    sh 'ls -F'
-                    // 1. Build Maven (Jenkins node cần cài maven)
+                // Thay 'maven' bằng tên container chứa công cụ maven của bạn
+                container('maven') {
                     sh 'mvn clean package -DskipTests'
-                    echo "--- Đang Build Docker Image ---"
-                    // Build bằng lệnh sh docker build truyền thống
-                    sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} -t ${IMAGE_NAME}:latest ."
-                    
-                    echo "--- Đang Login và Push ---"
-                    // Dùng credentials đã lưu trong Jenkins
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials-id', 
-                                    passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                        sh "echo $PASS | docker login -u $USER --password-stdin"
-                        sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
-                        sh "docker push ${IMAGE_NAME}:latest"
-                    }
-                    // 2. Build Docker
-                    docker.withRegistry('', DOCKER_CREDS) {
-                        def customImage = docker.build("${IMAGE_NAME}:${BUILD_NUMBER}")
-                        customImage.push()
-                        customImage.push('latest')
-                    }
                 }
             }
         }
-        stage('Check Docker') {
+
+        stage('Build & Push with Kaniko') {
             steps {
-                sh 'docker version'
+                container('kaniko') {
+                    sh """
+                        /kaniko/executor --context=`pwd` \
+                        --dockerfile=Dockerfile \
+                        --destination=${IMAGE_NAME}:${BUILD_NUMBER} \
+                        --destination=${IMAGE_NAME}:latest \
+                        --skip-tls-verify
+                    """
+                }
             }
         }
 
@@ -53,7 +61,7 @@ pipeline {
                     sh '''
                         git clone git@github.com:asbass/k8s.git
                         cd k8s
-                        sed -i "s|image:.*|image: ${IMAGE_NAME}:latest|g" backend/deployment.yaml
+                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|g" backend/deployment.yaml
                         git config user.email "jenkins@jenkins.com"
                         git config user.name "Jenkins"
                         git add backend/deployment.yaml
