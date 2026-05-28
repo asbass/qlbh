@@ -7,8 +7,8 @@ pipeline {
         DOCKERHUB_USER = 'taibaton'
         IMAGE_NAME = "${DOCKERHUB_USER}/ltw"
         // Sử dụng Jenkins Credentials để bảo mật
-        DOCKER_CREDS = 'dockerhub-credentials-id' 
-        GIT_CREDS = 'github-pat-credentials-id'
+        DOCKER_CREDS = 'docker' 
+        GIT_CREDS = 'f78957c5-d4aa-4ff1-bc1e-2f9de9c0d8b9'
     }
 
     stages {
