@@ -26,8 +26,8 @@ pipeline {
                     def java21 = '/usr/lib/jvm/java-21-openjdk-amd64'
                     // Dùng lệnh find để xem pom.xml thực sự nằm ở đâu
                     sh 'find . -name "pom.xml"'
-                    withEnv(["JAVA_HOME=${java21}", "PATH+JAVA=${java21}/bin"]) {
-                        sh 'java -version' // Kiểm tra nhanh xem nó đã nhận đúng Java 21 chưa
+                   withEnv(["JAVA_HOME=${java21Home}", "PATH=${java21Home}/bin:${env.PATH}"]) {
+                        sh 'java -version' // Kiểm tra lại lần cuối
                         sh 'mvn clean package -DskipTests'
                     }
                     // Nếu find cho ra kết quả như: ./backend/pom.xml
