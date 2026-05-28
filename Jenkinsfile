@@ -11,6 +11,18 @@ pipeline {
     }
 
     stages {
+        stage('Build & Push') {
+            steps {
+                script {
+                    // Định nghĩa đường dẫn Java 21 và đường dẫn tới bin của nó
+                    def java21 = '/usr/lib/jvm/java-21-openjdk-amd64'
+                    withEnv(["JAVA_HOME=${java21}", "PATH+JAVA=${java21}/bin"]) {
+                        sh 'java -version' // Kiểm tra nhanh xem nó đã nhận đúng Java 21 chưa
+                        sh 'mvn clean package -DskipTests'
+                    }
+                }
+            }
+        }
         stage('Checkout Code') {
             steps {
                 // Đảm bảo clone sạch sẽ vào workspace
