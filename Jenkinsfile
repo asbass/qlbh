@@ -25,10 +25,24 @@ pipeline {
 
                     // Dùng lệnh find để xem pom.xml thực sự nằm ở đâu
                         sh 'find . -name "pom.xml"'
-                        def java21 = '/usr/lib/jvm/java-21-openjdk-amd64'
-                        withEnv(["JAVA_HOME=${java21}", "PATH=${java21}/bin:${env.PATH}"]) {
-                            sh 'mvn -version' // Kiểm tra log để xem Maven đang dùng Java nào
-                            sh 'mvn clean package -DskipTests'
+                        def JAVA_21 = '/usr/lib/jvm/java-21-openjdk-amd64'
+                        
+                        // Ép buộc Maven dùng đúng javac của Java 21 thông qua biến môi trường
+                        withEnv([
+                            "JAVA_HOME=${JAVA_21}",
+                            "PATH=${JAVA_21}/bin:${env.PATH}"
+                        ]) {
+                            sh '''
+                                # Kiểm tra xem javac nào đang được gọi
+                                which javac
+                                javac -version
+                                
+                                # Chạy Maven và ép buộc compiler plugin dùng đúng đường dẫn java 21
+                                mvn clean package -DskipTests \
+                                -Dmaven.compiler.fork=true \
+                                -Dmaven.compiler.executable=${JAVA_21}/bin/javac \
+                                -Dmaven.compiler.compilerVersion=21
+                            '''
                         }
                     // Nếu find cho ra kết quả như: ./backend/pom.xml
                     // Bạn phải cd vào thư mục đó trước khi chạy maven
