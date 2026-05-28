@@ -28,7 +28,6 @@ pipeline {
                     // Nếu find cho ra kết quả như: ./backend/pom.xml
                     // Bạn phải cd vào thư mục đó trước khi chạy maven
                     // Giả sử pom.xml nằm trong thư mục 'backend'
-                    dir('backend') {
                         sh 'mvn clean package -DskipTests'
                         
                         // Build Docker tại thư mục có chứa Dockerfile
@@ -37,7 +36,6 @@ pipeline {
                             customImage.push()
                             customImage.push('latest')
                         }
-                    }
                 }
             }
         }
