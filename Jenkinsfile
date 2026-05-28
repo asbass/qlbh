@@ -1,37 +1,42 @@
 pipeline {
     agent any
     tools {
-        maven 'Maven-3.9' // Tên bạn vừa đặt ở trên
+        maven 'Maven-3.9' 
     }
     environment {
         DOCKERHUB_USER = 'taibaton'
         IMAGE_NAME = "${DOCKERHUB_USER}/ltw"
-        // Sử dụng Jenkins Credentials để bảo mật
         DOCKER_CREDS = 'docker' 
         GIT_CREDS = 'f78957c5-d4aa-4ff1-bc1e-2f9de9c0d8b9'
     }
 
     stages {
-        stage('Checkout Code') { // Thêm stage này
+        stage('Checkout Code') {
             steps {
-                // Thay URL bằng repo của bạn
+                // Đảm bảo clone sạch sẽ vào workspace
+                cleanWs()
                 git branch: 'main', url: 'https://github.com/asbass/qlbh.git'
             }
         }
+        
         stage('Build & Push') {
             steps {
                 script {
-                    sh 'pwd'
-                    // Dùng lệnh ls -F để xem có thấy pom.xml không
-                    sh 'ls -F'
-                    // 1. Build Maven (Jenkins node cần cài maven)
-                    sh 'mvn clean package -DskipTests'
+                    // Dùng lệnh find để xem pom.xml thực sự nằm ở đâu
+                    sh 'find . -name "pom.xml"'
                     
-                    // 2. Build Docker
-                    docker.withRegistry('', DOCKER_CREDS) {
-                        def customImage = docker.build("${IMAGE_NAME}:${BUILD_NUMBER}")
-                        customImage.push()
-                        customImage.push('latest')
+                    // Nếu find cho ra kết quả như: ./backend/pom.xml
+                    // Bạn phải cd vào thư mục đó trước khi chạy maven
+                    // Giả sử pom.xml nằm trong thư mục 'backend'
+                    dir('backend') {
+                        sh 'mvn clean package -DskipTests'
+                        
+                        // Build Docker tại thư mục có chứa Dockerfile
+                        docker.withRegistry('', DOCKER_CREDS) {
+                            def customImage = docker.build("${IMAGE_NAME}:${BUILD_NUMBER}")
+                            customImage.push()
+                            customImage.push('latest')
+                        }
                     }
                 }
             }
@@ -41,8 +46,10 @@ pipeline {
             steps {
                 sshagent([GIT_CREDS]) {
                     sh '''
-                        git clone git@github.com:asbass/k8s.git
-                        cd k8s
+                        rm -rf k8s-repo # Xóa folder cũ nếu có
+                        git clone git@github.com:asbass/k8s.git k8s-repo
+                        cd k8s-repo
+                        # Cập nhật file deployment.yaml
                         sed -i "s|image:.*|image: ${IMAGE_NAME}:latest|g" backend/deployment.yaml
                         git config user.email "jenkins@jenkins.com"
                         git config user.name "Jenkins"
