@@ -1,56 +1,32 @@
 pipeline {
-    agent {
-        kubernetes {
-            yaml '''
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:debug
-    imagePullPolicy: Always
-    command:
-    - /busybox/cat
-    tty: true
-    volumeMounts:
-    - name: docker-config
-      mountPath: /kaniko/.docker/
-  volumes:
-  - name: docker-config
-    secret:
-      secretName: docker-config
-      items:
-      - key: .dockerconfigjson
-        path: config.json
-'''
-        }
+    agent any
+    tools {
+        maven 'Maven-3.9' // Tên bạn vừa đặt ở trên
     }
-
     environment {
-        IMAGE_NAME = "taibaton/ltw"
+        DOCKERHUB_USER = 'taibaton'
+        IMAGE_NAME = "${DOCKERHUB_USER}/ltw"
+        // Sử dụng Jenkins Credentials để bảo mật
+        DOCKER_CREDS = 'dockerhub-credentials-id' 
         GIT_CREDS = 'github-pat-credentials-id'
     }
 
     stages {
-        stage('Maven Build') {
+        stage('Build & Push') {
             steps {
-                // Thay 'maven' bằng tên container chứa công cụ maven của bạn
-                container('maven') {
+                script {
+                    sh 'pwd'
+                    // Dùng lệnh ls -F để xem có thấy pom.xml không
+                    sh 'ls -F'
+                    // 1. Build Maven (Jenkins node cần cài maven)
                     sh 'mvn clean package -DskipTests'
-                }
-            }
-        }
-
-        stage('Build & Push with Kaniko') {
-            steps {
-                container('kaniko') {
-                    sh """
-                        /kaniko/executor --context=`pwd` \
-                        --dockerfile=Dockerfile \
-                        --destination=${IMAGE_NAME}:${BUILD_NUMBER} \
-                        --destination=${IMAGE_NAME}:latest \
-                        --skip-tls-verify
-                    """
+                    
+                    // 2. Build Docker
+                    docker.withRegistry('', DOCKER_CREDS) {
+                        def customImage = docker.build("${IMAGE_NAME}:${BUILD_NUMBER}")
+                        customImage.push()
+                        customImage.push('latest')
+                    }
                 }
             }
         }
@@ -61,7 +37,7 @@ spec:
                     sh '''
                         git clone git@github.com:asbass/k8s.git
                         cd k8s
-                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|g" backend/deployment.yaml
+                        sed -i "s|image:.*|image: ${IMAGE_NAME}:latest|g" backend/deployment.yaml
                         git config user.email "jenkins@jenkins.com"
                         git config user.name "Jenkins"
                         git add backend/deployment.yaml
