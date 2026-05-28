@@ -20,7 +20,18 @@ pipeline {
                     sh 'ls -F'
                     // 1. Build Maven (Jenkins node cần cài maven)
                     sh 'mvn clean package -DskipTests'
+                    echo "--- Đang Build Docker Image ---"
+                    // Build bằng lệnh sh docker build truyền thống
+                    sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} -t ${IMAGE_NAME}:latest ."
                     
+                    echo "--- Đang Login và Push ---"
+                    // Dùng credentials đã lưu trong Jenkins
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials-id', 
+                                    passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "echo $PASS | docker login -u $USER --password-stdin"
+                        sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+                        sh "docker push ${IMAGE_NAME}:latest"
+                    }
                     // 2. Build Docker
                     docker.withRegistry('', DOCKER_CREDS) {
                         def customImage = docker.build("${IMAGE_NAME}:${BUILD_NUMBER}")
@@ -28,6 +39,11 @@ pipeline {
                         customImage.push('latest')
                     }
                 }
+            }
+        }
+        stage('Check Docker') {
+            steps {
+                sh 'docker version'
             }
         }
 
